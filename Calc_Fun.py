@@ -5,6 +5,8 @@
 # Manaus 29 de março de 2018
 
 from datetime import date
+import math
+import os
 
 print("+" * 70)
 print("CÁLCULO DE FUNDAÇÕES RASAS E PROFUNDAS \n"
@@ -123,7 +125,8 @@ def compAncoragem(Fck, Aderencia, ancoragem):
     return lb
 
 
-# Função para localizar o diâmetro da barra, conforme o consumo de aço.
+# Função para localizar o diâmetro da barra, conforme
+# o consumo de aço.
 def locDiaBarra(areaAco):
     global diaBarra
     diametro = [6.3, 8, 10, 12.5]
@@ -161,4 +164,84 @@ print()
 aderencia = int(input("Informe a opção desejada para "
                       "o tipo aderência: "))
 print()
-print("+" * 70)
+print("#" * 70)
+print("Escolha a opção de ancoragem para armadura do "
+      "pilareite: \n"
+      "Opção[1] - Sem gancho. \n"
+      "Opção[2] - Com gancho.")
+print("#" * 70)
+print()
+ancoragem = int(input("Informe a opção de ancoragem"
+                      "para o pilareite: "))
+lb = compAncoragem(fck, aderencia, ancoragem)
+
+# Condição que verifica o tipo de fundação indireta.
+if tipoFundacao == 1:
+    print()
+    print("#" * 70)
+    print("Escolha o tipo de sapata rasa: \n"
+          "Opção[1] - Sapata Isolada. \n"
+          "Opção[2] - Sapata Corrida. \n"
+          "Opção[3] - Sapata de Divisa. \n"
+          "Opção[4] - Sapata Associada.")
+    print("#" * 70)
+    tipoSapata = int(input("Informe a opção desejada"
+                           "para o tipo de sapata: "))
+
+    # Início da condição que verifica o tipo sapata rasa.
+    if tipoSapata == 1:
+        cargaPilar = float(input("Informe o carregamento "
+                                 "que chega no pilar em "
+                                 "(tf): "))
+        aPilar = float(input("Informe o lado (a) do pilar "
+                             "em (m): "))
+        bPilar = float(input("Informe o lado (b) do pilar "
+                             "em (m): "))
+        # Equação para determinar a área da sapata rasa em m².
+        areaSapata = (1.05 * cargaPilar) / tSolo
+        # Equação do 2º para determinar os lados da sapata
+        # em (m).
+        aSapata = (((aPilar - bPilar) / 2) +
+                   math.sqrt(((aPilar - bPilar) ** 2) / 4) +
+                   areaSapata)
+        bSapata = areaSapata / aSapata
+        # Cálculo dos balanços da sapata em (m).
+        balanco = (aSapata - aPilar) / 2
+        # Cálculo da altura do cone da sapata em (m).
+        h = (aSapata - aPilar) / 3
+
+        # Condição para determinar o melhor altura útil
+        # do cone da sapata em (m).
+        if h > lb:
+            d = h * 1.25
+        else:
+            d = lb * 1.25
+        # Cobrimento da armadura em (m).
+        cob = 0.05
+        h = d + cob
+        # Altura da base da sapata em (m).
+        h0 = d/3
+        # Altura para apoiar a sapata em solos resistêntes.
+        hTotalRasa = aSapata/2
+        hTotalProfunda = aSapata*2
+        # Equação para determinar o ângulo da sapata em graus.
+        angulo = math.atan((h-h0)/balanco)*(180/math.pi)
+
+        # Dimensionamento das armaduras na sapata.
+        # Cálculo da tensão que a sapata gera no solo em
+        # (tf/m²)
+        tensaoSp = (1.05*cargaPilar)/(aSapata*bSapata)
+        # Condição para verificar e calcular Xa e Xb.
+        if (h/2) <= balanco <= (h*2):
+            msgLimiteCBE70 = "Ok, os limites para calcular " \
+                             "Xa e Xb estão dentro dos padrões" \
+                             "da CBE-70"
+            Xa = balanco + (0.15*aPilar)
+            Xb = balanco + (0.15*bPilar)
+        else:
+            msgLimiteCBE70 = "ERRO, os limites para calcular" \
+                             "Xa e Xb não estão dentro dos padrões" \
+                             "da CBE-70 \n" \
+                             "O tipo de fundação não é recomendado" \
+                             "!"
+
